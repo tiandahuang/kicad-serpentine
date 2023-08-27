@@ -1,5 +1,6 @@
 import pcbnew
 import os
+from .serpentine_wrapper import SerpentineWrapper
 
 class SerpentineAction(pcbnew.ActionPlugin):
     def defaults(self):
@@ -10,5 +11,4 @@ class SerpentineAction(pcbnew.ActionPlugin):
         self.icon_file_name = os.path.join(os.path.dirname(__file__), 'icon.png')
 
     def Run(self):
-        # The entry function of the plugin that is executed on user action
-        print("Hello World")
+        SerpentineWrapper()
