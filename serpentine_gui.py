@@ -126,8 +126,8 @@ class MainFrame ( wx.Frame ):
 		self.b_wc_value = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
 		TraceParamsSizer.Add( self.b_wc_value, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
-		self.b_width_label = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
-		TraceParamsSizer.Add( self.b_width_label, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
+		self.b_width_value = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
+		TraceParamsSizer.Add( self.b_width_value, 0, wx.ALL|wx.ALIGN_CENTER_VERTICAL, 5 )
 
 
 		MainSizer.Add( TraceParamsSizer, 1, wx.EXPAND, 5 )
@@ -162,7 +162,7 @@ class MainFrame ( wx.Frame ):
 		self.f_wc_value.Bind( wx.EVT_TEXT_ENTER, self.FWCParamEvent )
 		self.f_width_value.Bind( wx.EVT_TEXT_ENTER, self.FWidthParamEvent )
 		self.b_wc_value.Bind( wx.EVT_TEXT_ENTER, self.BWCParamEvent )
-		self.b_width_label.Bind( wx.EVT_TEXT_ENTER, self.BWidthParamEvent )
+		self.b_width_value.Bind( wx.EVT_TEXT_ENTER, self.BWidthParamEvent )
 		self.confirm_boxApply.Bind( wx.EVT_BUTTON, self.ApplyEvent )
 		self.confirm_boxCancel.Bind( wx.EVT_BUTTON, self.CancelEvent )
 		self.confirm_boxOK.Bind( wx.EVT_BUTTON, self.ValidateEvent )

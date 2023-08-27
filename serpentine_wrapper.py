@@ -13,27 +13,40 @@ class SerpentineGUI(gui.MainFrame):
 
         def call2(f_inner, f_outer, *args, **kwargs):
             return f_outer(f_inner(*args, **kwargs))
+        
+        def wx_textctrl_getvalue(wx_obj, **validate_kwargs):
+            return ft.partial(call2, 
+                              wx_obj.GetValue, 
+                              ft.partial(self.validate_num, **validate_kwargs))
+
+        def wx_textctrl_setvalue(wx_obj):
+            return ft.partial(call2, str, wx_obj.SetValue)
+
 
         self.param_getters = {
-                'radius':   ft.partial(call2, self.r_value.GetValue, ft.partial(self.validate_num, lo=0)),
-                'amplitude':ft.partial(call2, self.a_value.GetValue, ft.partial(self.validate_num, lo=0)),
-                'alpha':    ft.partial(call2, self.alph_value.GetValue, ft.partial(self.validate_num, lo=0, hi=90)),
-                'length':   ft.partial(call2, self.len_value.GetValue, ft.partial(self.validate_num, lo=0)),
-                'wc':       ft.partial(call2, self.ckt_value.GetValue, ft.partial(self.validate_num, lo=1, type_conv=int)),
-                'width':    ft.partial(call2, self.width_value.GetValue, ft.partial(self.validate_num, lo=0)),
-                'pitch':    ft.partial(call2, self.pitch_value.GetValue, ft.partial(self.validate_num, lo=0)),
-                'margin':   ft.partial(call2, self.marg_value.GetValue, ft.partial(self.validate_num, lo=0)),
+                'radius':   wx_textctrl_getvalue(self.r_value, lo=0),
+                'amplitude':wx_textctrl_getvalue(self.a_value, lo=0),
+                'alpha':    wx_textctrl_getvalue(self.alph_value, lo=0, hi=90),
+                'length':   wx_textctrl_getvalue(self.len_value, lo=0),
+                'pitch':    wx_textctrl_getvalue(self.pitch_value, lo=0),
+                'f_wc':     wx_textctrl_getvalue(self.f_wc_value, lo=0, type_conv=int),
+                'f_width':  wx_textctrl_getvalue(self.f_width_value, lo=0),
+                'b_wc':     wx_textctrl_getvalue(self.b_wc_value, lo=0, type_conv=int),
+                'b_width':  wx_textctrl_getvalue(self.b_width_value, lo=0),
+                'noedge':   self.edgedisable_value.GetValue,
         }
 
         self.param_setters = {
-                'radius':   ft.partial(call2, str, self.r_value.SetValue),
-                'amplitude':ft.partial(call2, str, self.a_value.SetValue),
-                'alpha':    ft.partial(call2, str, self.alph_value.SetValue),
-                'length':   ft.partial(call2, str, self.len_value.SetValue),
-                'wc':       ft.partial(call2, str, self.ckt_value.SetValue),
-                'width':    ft.partial(call2, str, self.width_value.SetValue),
-                'pitch':    ft.partial(call2, str, self.pitch_value.SetValue),
-                'margin':   ft.partial(call2, str, self.marg_value.SetValue),
+                'radius':   wx_textctrl_setvalue(self.r_value),
+                'amplitude':wx_textctrl_setvalue(self.a_value),
+                'alpha':    wx_textctrl_setvalue(self.alph_value),
+                'length':   wx_textctrl_setvalue(self.len_value),
+                'pitch':    wx_textctrl_setvalue(self.pitch_value),
+                'f_wc':     wx_textctrl_setvalue(self.f_wc_value),
+                'f_width':  wx_textctrl_setvalue(self.f_width_value),
+                'b_wc':     wx_textctrl_setvalue(self.b_wc_value),
+                'b_width':  wx_textctrl_setvalue(self.b_width_value),
+                'noedge':   self.edgedisable_value.SetValue,
         }
 
         self.param_defaults = {
@@ -41,10 +54,12 @@ class SerpentineGUI(gui.MainFrame):
                 'amplitude':1,
                 'alpha':    0,
                 'length':   10,
-                'wc':       4,
-                'width':    0.2,
-                'pitch':    0.4,
-                'margin':   0.4,
+                'pitch':    0.2,
+                'f_wc':     1,
+                'f_width':  0.2,
+                'b_wc':     1,
+                'b_width':  0.2,
+                'noedge':   False,
         }
 
         for param, val in self.param_defaults.items():
@@ -54,49 +69,51 @@ class SerpentineGUI(gui.MainFrame):
     # event handlers
 
     def RadiusParamEvent(self, event):
+        event_str = 'radius'
         self.param_event_handler(event_str)
 
     def AmplitudeParamEvent(self, event):
+        event_str = 'amplitude'
         self.param_event_handler(event_str)
 
     def AlphaParamEvent(self, event):
+        event_str = 'alpha'
         self.param_event_handler(event_str)
 
     def LengthParamEvent(self, event):
+        event_str = 'length'
         self.param_event_handler(event_str)
 
     def WirePitchParamEvent(self, event):
+        event_str = 'pitch'
         self.param_event_handler(event_str)
 
     def EdgeDisableParamEvent(self, event):
+        event_str = 'noedge'
         self.param_event_handler(event_str)
 
     def FWCParamEvent(self, event):
+        event_str = 'f_wc'
         self.param_event_handler(event_str)
 
     def FWidthParamEvent(self, event):
+        event_str = 'f_width'
         self.param_event_handler(event_str)
 
     def BWCParamEvent(self, event):
+        event_str = 'b_wc'
         self.param_event_handler(event_str)
 
     def BWidthParamEvent(self, event):
-        self.param_event_handler(event_str)
-
-    def ApplyEvent(self, event):
-        self.param_event_handler(event_str)
-
-    def CancelEvent(self, event):
-        self.param_event_handler(event_str)
-
-    def ValidateEvent(self, event):
+        event_str = 'b_width'
         self.param_event_handler(event_str)
 
     def ApplyEvent(self, event):
         event_str = 'apply'
         self.log(event_str)
-        if not self.validate_func(self.params):
-            pass    # display warning or something
+        status, errmsg = self.validate_func(self.params)
+        if not status:
+            self.error(errmsg)
         self.run_func(self.params)
         wx.Exit()
 
@@ -123,7 +140,7 @@ class SerpentineGUI(gui.MainFrame):
 
     def param_event_handler(self, event_str):
         val = self.param_getters[event_str]()
-        if val:
+        if val is not None:
             self.params[event_str] = val
         else:
             self.param_setters[event_str](self.params[event_str])
@@ -186,9 +203,3 @@ class SerpentineWrapper():
 if __name__ == '__main__':
 
     SerpentineWrapper()
-
-
-
-# TODO: remove separate wire-to-wire and wire-to-edge
-# TODO: separate top/bottom spacing and widths
-# TODO: disable edgecuts
