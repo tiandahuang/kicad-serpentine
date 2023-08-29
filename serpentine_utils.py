@@ -53,15 +53,34 @@ class SerpentineVector():
             (rad * sin_th, rad * (1 - cos_th))
         ]
 
+        pattern_width = 2 * ((rad + (rad - ampl) * sin_a) / cos_a)
+
         plts = PlotSim()
         
-        arc1 = self.Arc(*pattern_pts[1], *ends_arcmid[1], *pattern_pts[2], 4)
-        # arc1 = self.Arc(*pattern_pts[0], *pattern_pts[1], *pattern_pts[2], 4)
-        seg1 = self.LineSeg(*pattern_pts[2], *pattern_pts[3], 4)
+        all_points = [pattern_pts[1], ends_arcmid[1], pattern_pts[2], pattern_pts[3]]
+        for i in range(1, 10):
+            pts = pattern_pts if (i % 2 == 0) else self.mirror_pts_y(pattern_pts, ampl)
+            pts = self.translate_pts(pts, i * pattern_width, 0)
+            all_points.extend(pts)
 
-        plts.plot_arc(arc1)
-        # plts.plot_lineseg(seg1)
+        for i in range(0, len(all_points) - 2, 2):
+            p1, p2, p3 = [all_points[i + j] for j in range(3)]
+            if (i % 4 == 0):
+                vec = self.Arc(*p1, *p2, *p3, 4)
+                plts.plot_arc(vec)
+            else:
+                vec = self.LineSeg(*p1, *p3, 4)
+                plts.plot_lineseg(vec)
+
         plts.show()
+    
+    @staticmethod
+    def mirror_pts_y(pts, y):
+        return [(_x, (2 * y) - _y) for _x, _y in pts]
+
+    @staticmethod
+    def translate_pts(pts, x, y):
+        return [(x + _x, y + _y) for _x, _y in pts]
 
     def validate(self, params):
         try:
@@ -72,5 +91,5 @@ class SerpentineVector():
 
 if __name__ == '__main__':
     SerpentineVector().calculate_vectors({'radius':1,
-                                          'amplitude':3,
+                                          'amplitude':2.5,
                                           'alpha':10})

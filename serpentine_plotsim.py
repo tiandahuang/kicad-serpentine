@@ -14,7 +14,6 @@ class PlotSim():
     def plot_arc(self, arc):
         cx, cy, r, th1, th2 = self.spline_to_arc(arc)
         if arc.y2 < arc.y1: th1, th2 = th2, th1     # flip to account for clockwise drawing
-        print(r, th1, th2)
         self.plot_points([(arc.x1, arc.y1), (arc.x2, arc.y2), (arc.x3, arc.y3), (cx, cy)])
         self.ax.add_patch(patches.Arc((cx, cy), 
                                       2*r, 2*r, 
@@ -24,7 +23,7 @@ class PlotSim():
     def plot_lineseg(self, lineseg):
         self.plot_points([(lineseg.x1, lineseg.y1), (lineseg.x2, lineseg.y2)])
         self.ax.add_patch(patches.Polygon([(lineseg.x1, lineseg.y1),
-                                          (lineseg.x2, lineseg.y2)],
+                                           (lineseg.x2, lineseg.y2)],
                                           closed=False, fill=False,
                                           linewidth=lineseg.w))
         
@@ -35,13 +34,14 @@ class PlotSim():
     def spline_to_arc(arc):
         # x1, y1, x2, y2, x3, y3 --> x, y, r, th1, th2
         A = np.array([[2 * (arc.x1 - arc.x3), 2 * (arc.y1 - arc.y3)],
-                        [2 * (arc.x1 - arc.x2), 2 * (arc.y1 - arc.x2)]])
+                      [2 * (arc.x1 - arc.x2), 2 * (arc.y1 - arc.y2)]])
         b = np.array([arc.x1**2 + arc.y1**2 - arc.x3**2 - arc.y3**2,
-                        arc.x1**2 + arc.y1**2 - arc.x2**2 - arc.y2**2])
+                      arc.x1**2 + arc.y1**2 - arc.x2**2 - arc.y2**2])
         cx, cy = np.linalg.solve(A, b)
         r = np.linalg.norm([arc.x1 - cx, arc.y1 - cy])
-        th1, th2 = np.arcsin([(cy - arc.y1) / r, (cy - arc.y3) / r])
-        th1, th2 = np.degrees([-th1, np.pi + th2])
+        th1, th2 = np.degrees(np.arcsin([(cy - arc.y1) / r, (cy - arc.y3) / r]))
+        flip = np.abs(th1 - th2) < 90
+        th1, th2 = [-th1, (180 + th2) if flip else (-th2)]
 
         return cx, cy, r, th1, th2
 
