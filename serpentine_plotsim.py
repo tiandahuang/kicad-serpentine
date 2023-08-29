@@ -13,12 +13,22 @@ class PlotSim():
 
     def plot_arc(self, arc):
         cx, cy, r, th1, th2 = self.spline_to_arc(arc)
-        if arc.y2 < arc.y1: th1, th2 = th2, th1     # flip to account for clockwise drawing
         self.plot_points([(arc.x1, arc.y1), (arc.x2, arc.y2), (arc.x3, arc.y3), (cx, cy)])
         self.ax.add_patch(patches.Arc((cx, cy), 
                                       2*r, 2*r, 
-                                      theta1=th1, theta2=th2, 
+                                      theta1=th1, theta2=th2,
                                       linewidth=arc.w))
+        
+    def plot_arc_safe(self, arc):
+        self.plot_points([(arc.x1, arc.y1), (arc.x2, arc.y2), (arc.x3, arc.y3)])
+        self.ax.add_patch(patches.Polygon([(arc.x1, arc.y1),
+                                           (arc.x2, arc.y2)],
+                                          closed=False, fill=False,
+                                          linewidth=arc.w))
+        self.ax.add_patch(patches.Polygon([(arc.x2, arc.y2),
+                                           (arc.x3, arc.y3)],
+                                          closed=False, fill=False,
+                                          linewidth=arc.w))
 
     def plot_lineseg(self, lineseg):
         self.plot_points([(lineseg.x1, lineseg.y1), (lineseg.x2, lineseg.y2)])
@@ -39,23 +49,11 @@ class PlotSim():
                       arc.x1**2 + arc.y1**2 - arc.x2**2 - arc.y2**2])
         cx, cy = np.linalg.solve(A, b)
         r = np.linalg.norm([arc.x1 - cx, arc.y1 - cy])
-        th1, th2 = np.degrees(np.arcsin([(cy - arc.y1) / r, (cy - arc.y3) / r]))
-        flip = np.abs(th1 - th2) < 90
-        th1, th2 = [-th1, (180 + th2) if flip else (-th2)]
+        th1, th2 = np.degrees(np.arcsin([min((cy - arc.y1) / r, 1.0), min((cy - arc.y3) / r, 1.0)]))
+
+        x1_pos, y1_pos = (cx - arc.x1) > 0, (cy - arc.y1) > 0
+        x3_pos, y3_pos = (cx - arc.x3) > 0, (cy - arc.y3) > 0
+        if (x1_pos ^ y1_pos): th1 = 180 - th1
+        if (x3_pos ^ y3_pos): th2 = 180 - th2
 
         return cx, cy, r, th1, th2
-
-"""
-fig, ax = plt.subplots()
-
-w = 2
-arc = self.Arc(0, 0, 1, 1, 2, 0, 2)
-cx, cy, r, th1, th2 = spline_to_arc(arc)
-
-ax.add_patch(patches.Arc((cx, cy), r, r, theta1=th1, theta2=th2, linewidth=w))
-ax.plot(cx, cy, marker='o', markersize=5, color='red')
-print(r, th1, th2)
-
-ax.set_aspect('equal', adjustable='datalim')
-plt.show()
-"""

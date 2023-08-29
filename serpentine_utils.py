@@ -54,20 +54,24 @@ class SerpentineVector():
         ]
 
         pattern_width = 2 * ((rad + (rad - ampl) * sin_a) / cos_a)
+        num_iterations = (max(2, math.floor(params['length'] / pattern_width)) // 2) * 2
 
         plts = PlotSim()
         
         all_points = [pattern_pts[1], ends_arcmid[1], pattern_pts[2], pattern_pts[3]]
-        for i in range(1, 10):
+        for i in range(1, num_iterations):
             pts = pattern_pts if (i % 2 == 0) else self.mirror_pts_y(pattern_pts, ampl)
             pts = self.translate_pts(pts, i * pattern_width, 0)
             all_points.extend(pts)
+        pts = [pattern_pts[0], ends_arcmid[0], pattern_pts[1]]
+        pts = self.translate_pts(pts, (i + 1) * pattern_width, 0)
+        all_points.extend(pts)
 
         for i in range(0, len(all_points) - 2, 2):
             p1, p2, p3 = [all_points[i + j] for j in range(3)]
             if (i % 4 == 0):
                 vec = self.Arc(*p1, *p2, *p3, 4)
-                plts.plot_arc(vec)
+                plts.plot_arc_safe(vec)
             else:
                 vec = self.LineSeg(*p1, *p3, 4)
                 plts.plot_lineseg(vec)
@@ -91,5 +95,6 @@ class SerpentineVector():
 
 if __name__ == '__main__':
     SerpentineVector().calculate_vectors({'radius':1,
-                                          'amplitude':2.5,
-                                          'alpha':10})
+                                          'amplitude':2,
+                                          'alpha':-10,
+                                          'length':20})
