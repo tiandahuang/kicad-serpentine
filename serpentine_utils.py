@@ -1,5 +1,3 @@
-# import pcbnew
-from serpentine_plotsim import PlotSim
 import math
 import collections
 
@@ -72,10 +70,6 @@ class SerpentineVector():
 
         pattern_width = 2 * ((rad + (rad - ampl) * sin_a) / cos_a)
         num_iterations = (max(2, math.floor(params['length'] / pattern_width)) // 2) * 2
-        
-        # TODO: get rid of this, plotting
-        plts = PlotSim((-0.25*params['length'], 1.25*params['length']), (-ampl*0.5, ampl*2.5))
-        layer2color = {'edgecuts':'g', 'f_copper':'r', 'b_copper':'b'}
 
         for layer in self.vectors:
             for ofs in self.vectors[layer]['offsets']:
@@ -92,14 +86,35 @@ class SerpentineVector():
                 pts = self.translate_pts(pts, (i + 1) * pattern_width, 0)
                 all_points.extend(pts)
 
-                # TODO: turn this into arcs and linesegs, plot later
-                for i in range(0, len(all_points) - 1, 1):
-                    p1, p2 = [all_points[i + j] for j in range(2)]
-                    vec = self.LineSeg(*p1, *p2)
-                    plts.plot_lineseg(vec, color=layer2color[layer], width=self.vectors[layer]['width'])
+                i = cnt = 0
+                while (i < len(all_points) - 2):
+                    p1, p2, p3 = [all_points[i + j] for j in range(3)]
+                    if cnt % 2 == 0: 
+                        seg = self.Arc(*p1, *p2, *p3)
+                        i += 2
+                    else:
+                        seg = self.LineSeg(*p1, *p2)
+                        i += 1
+                    self.vectors[layer]['segments'].append(seg)
+                    cnt += 1
+                
+        # TODO: get rid of this, plotting
+        # TODO: replace with kicad add segment and kicad add arc
+        plts = PlotSim((-0.25*params['length'], 1.25*params['length']), (-ampl*0.5, ampl*2.5))
+        layer2color = {'edgecuts':'g', 'f_copper':'r', 'b_copper':'b'}
+            
+        for layer in self.vectors:
+            for s in self.vectors[layer]['segments']:
+                if type(s) is self.Arc:
+                    plts.plot_arc_safe(s, color=layer2color[layer], width=self.vectors[layer]['width'])
+                else:
+                    plts.plot_lineseg(s, color=layer2color[layer], width=self.vectors[layer]['width']*0.75)
 
         plts.show()
     
+    def route_vectors(self):
+        pass
+
     @staticmethod
     def mirror_pts_y(pts, y):
         return [(_x, (2 * y) - _y) for _x, _y in pts]
@@ -120,6 +135,7 @@ class SerpentineVector():
     
 
 if __name__ == '__main__':
+    from serpentine_plotsim import PlotSim
     SerpentineVector().calculate_vectors({"radius":2,
                                           "amplitude":5,
                                           "alpha":10,
@@ -130,3 +146,5 @@ if __name__ == '__main__':
                                           "b_wc":3,
                                           "b_width":0.2,
                                           "noedge":False})
+else:
+    import pcbnew
