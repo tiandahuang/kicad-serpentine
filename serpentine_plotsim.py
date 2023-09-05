@@ -4,50 +4,61 @@ import numpy as np
 
 class PlotSim():
 
-    colors = 'bgcmy'
-
-    def __init__(self) -> None:
+    def __init__(self, xlim, ylim) -> None:
         self.fig, self.ax = plt.subplots()
+        self.ax.set_xlim(xlim)
+        self.ax.set_ylim(ylim)
         self.ax.set_aspect('equal', adjustable='datalim')
 
     def show(self):
         plt.show()
 
-    def plot_arc(self, arc):
+    def plot_arc(self, arc, **kwargs):
         cx, cy, r, th1, th2 = self.spline_to_arc(arc)
         self.plot_points([(arc.x1, arc.y1), (arc.x2, arc.y2), (arc.x3, arc.y3), (cx, cy)])
         self.ax.add_patch(patches.Arc((cx, cy), 
                                       2*r, 2*r, 
                                       theta1=th1, theta2=th2,
-                                      color=self.colors[arc.w],
-                                      linewidth=4))
+                                      color=kwargs['color'],
+                                      linewidth=self.mm_to_pt(kwargs['width']),
+                                      alpha=0.5))
         
-    def plot_arc_safe(self, arc):
+    def plot_arc_safe(self, arc, **kwargs):
         self.plot_points([(arc.x1, arc.y1), (arc.x2, arc.y2), (arc.x3, arc.y3)])
         self.ax.add_patch(patches.Polygon([(arc.x1, arc.y1),
                                            (arc.x2, arc.y2)],
                                           closed=False, fill=False,
-                                          color=self.colors[arc.w],
-                                          linewidth=4))
+                                          color=kwargs['color'],
+                                          linewidth=self.mm_to_pt(kwargs['width']),
+                                          alpha=0.5))
         self.ax.add_patch(patches.Polygon([(arc.x2, arc.y2),
                                            (arc.x3, arc.y3)],
                                           closed=False, fill=False,
-                                          color=self.colors[arc.w],
-                                          linewidth=4))
+                                          color=kwargs['color'],
+                                          linewidth=self.mm_to_pt(kwargs['width']),
+                                          alpha=0.5))
 
-    def plot_lineseg(self, lineseg):
+    def plot_lineseg(self, lineseg, **kwargs):
         self.plot_points([(lineseg.x1, lineseg.y1), (lineseg.x2, lineseg.y2)])
         self.ax.add_patch(patches.Polygon([(lineseg.x1, lineseg.y1),
                                            (lineseg.x2, lineseg.y2)],
                                           closed=False, fill=False,
-                                          color=self.colors[lineseg.w],
-                                          linewidth=4))
+                                          color=kwargs['color'],
+                                          linewidth=self.mm_to_pt(kwargs['width']),
+                                          alpha=0.5))
         
     def plot_points(self, pts):
-        [self.ax.plot(*pt, marker='o', markersize=5, color='r') for pt in pts]
+        [self.ax.plot(*pt, marker='o', markersize=4, color='r') for pt in pts]
+
+
+    def mm_to_pt(self, mm):
+        length = self.fig.bbox_inches.width * self.ax.get_position().width * 72
+        value_range = np.diff(self.ax.get_xlim())
+        return mm * (length / value_range)
 
     @staticmethod
     def spline_to_arc(arc):
+        # TODO: fix this
         # x1, y1, x2, y2, x3, y3 --> x, y, r, th1, th2
         A = np.array([[2 * (arc.x1 - arc.x3), 2 * (arc.y1 - arc.y3)],
                       [2 * (arc.x1 - arc.x2), 2 * (arc.y1 - arc.y2)]])
