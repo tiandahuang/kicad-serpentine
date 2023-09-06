@@ -147,7 +147,7 @@ class SerpentineVector():
         return track
     
     def xy_to_pcbpoint(self, x, y):
-        return pcbnew.VECTOR2I_MM(x+100, y+100)
+        return pcbnew.VECTOR2I_MM(x, y)
 
     @staticmethod
     def mirror_pts_y(pts, y):
@@ -156,10 +156,6 @@ class SerpentineVector():
     @staticmethod
     def translate_pts(pts, x, y):
         return [(x + _x, y + _y) for _x, _y in pts]
-
-    @staticmethod
-    def pts_to_center_arc(center, start_point, middle_point, end_point):
-        pass
 
     def validate(self, params):
         try:

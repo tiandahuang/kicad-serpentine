@@ -27,7 +27,7 @@ class SerpentineGUI(MainFrame):
         self.param_getters = {
                 'radius':   wx_textctrl_getvalue(self.r_value, lo=0),
                 'amplitude':wx_textctrl_getvalue(self.a_value, lo=0),
-                'alpha':    wx_textctrl_getvalue(self.alph_value, lo=0, hi=90),
+                'alpha':    wx_textctrl_getvalue(self.alph_value, lo=-90, hi=90),
                 'length':   wx_textctrl_getvalue(self.len_value, lo=0),
                 'pitch':    wx_textctrl_getvalue(self.pitch_value, lo=0),
                 'f_wc':     wx_textctrl_getvalue(self.f_wc_value, lo=0, type_conv=int),
