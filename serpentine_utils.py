@@ -1,3 +1,4 @@
+import pcbnew
 import math
 import collections
 
@@ -6,7 +7,7 @@ class SerpentineVector():
     def __init__(self):
         
         self.vectors = {
-            'edgecuts':{'width':0.05, 'offsets':[], 'segments':[]},  # TODO: reset to 0 once done testing
+            'edgecuts':{'width':0.1, 'offsets':[], 'segments':[]},
             'f_copper':{'width':0, 'offsets':[], 'segments':[]},
             'b_copper':{'width':0, 'offsets':[], 'segments':[]}}
 
@@ -97,23 +98,43 @@ class SerpentineVector():
                         i += 1
                     self.vectors[layer]['segments'].append(seg)
                     cnt += 1
-                
-        # TODO: get rid of this, plotting
-        # TODO: replace with kicad add segment and kicad add arc
-        plts = PlotSim((-0.25*params['length'], 1.25*params['length']), (-ampl*0.5, ampl*2.5))
-        layer2color = {'edgecuts':'g', 'f_copper':'r', 'b_copper':'b'}
-            
-        for layer in self.vectors:
-            for s in self.vectors[layer]['segments']:
-                if type(s) is self.Arc:
-                    plts.plot_arc_safe(s, color=layer2color[layer], width=self.vectors[layer]['width'])
-                else:
-                    plts.plot_lineseg(s, color=layer2color[layer], width=self.vectors[layer]['width']*0.75)
-
-        plts.show()
     
     def route_vectors(self):
-        pass
+        self.board = pcbnew.GetBoard()
+        name_to_layer = {'edgecuts':pcbnew.Edge_Cuts,
+                         'f_copper':pcbnew.F_Cu,
+                         'b_copper':pcbnew.B_Cu}
+
+        for layer in self.vectors:
+            width = self.vectors[layer]['width']
+            pcblayer = name_to_layer[layer]
+            for s in self.vectors[layer]['segments']:
+                if type(s) is self.Arc:
+                    self.board.Add(self.arc_to_pcbarc(s, width, pcblayer))
+                else:       # type is LineSeg
+                    self.board.Add(self.line_to_pcbtrack(s, width, pcblayer))
+
+    def arc_to_pcbarc(self, arc, width, layer):
+        pcbarc = pcbnew.PCB_ARC(self.board)
+        pcbarc.SetLayer(layer)
+        pcbarc.SetWidth(pcbnew.FromMM(width))
+        pcbarc.SetStart(self.xy_to_pcbpoint(arc.x1, arc.y1))
+        pcbarc.SetMid(self.xy_to_pcbpoint(arc.x2, arc.y2))
+        pcbarc.SetEnd(self.xy_to_pcbpoint(arc.x3, arc.y3))
+        self.board.Add(pcbarc)
+        return pcbarc
+
+    def line_to_pcbtrack(self, lineseg, width, layer):
+        track = pcbnew.PCB_TRACK(self.board)
+        track.SetLayer(layer)
+        track.SetWidth(pcbnew.FromMM(width))
+        track.SetStart(self.xy_to_pcbpoint(lineseg.x1, lineseg.y1))
+        track.SetEnd(self.xy_to_pcbpoint(lineseg.x2, lineseg.y2))
+        self.board.Add(track)
+        return track
+    
+    def xy_to_pcbpoint(self, x, y):
+        return pcbnew.VECTOR2I_MM(x, y)
 
     @staticmethod
     def mirror_pts_y(pts, y):
@@ -122,29 +143,34 @@ class SerpentineVector():
     @staticmethod
     def translate_pts(pts, x, y):
         return [(x + _x, y + _y) for _x, _y in pts]
-    
-    @staticmethod
-    def offset_pts_bi(pts, ofs):
-        pass
 
     def validate(self, params):
         try:
             self.calculate_vectors(params)
         except Exception as e:
             return False, str(e)
+        return True, None
+    
+    def run(self, params):
+        try:
+            self.calculate_vectors(params)
+            self.route_vectors()
+        except Exception as e:
+            return False, str(e)
+        return True, None
     
 
 if __name__ == '__main__':
     from serpentine_plotsim import PlotSim
-    SerpentineVector().calculate_vectors({"radius":2,
-                                          "amplitude":5,
-                                          "alpha":10,
-                                          "length":20,
-                                          "pitch":0.3,
-                                          "f_wc":2,
-                                          "f_width":0.4,
-                                          "b_wc":3,
-                                          "b_width":0.2,
-                                          "noedge":False})
-else:
-    import pcbnew
+    a = SerpentineVector()
+    a.calculate_vectors({"radius":2,
+                         "amplitude":5,
+                         "alpha":10,
+                         "length":20,
+                         "pitch":0.3,
+                         "f_wc":2,
+                         "f_width":0.4,
+                         "b_wc":3,
+                         "b_width":0.2,
+                         "noedge":False})
+

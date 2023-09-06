@@ -3,7 +3,10 @@ import matplotlib.patches as patches
 import numpy as np
 
 class PlotSim():
-
+    """
+    Used when testing coordinate/vector generation
+    Doesn't work too well 😭☹️
+    """
     def __init__(self, xlim, ylim) -> None:
         self.fig, self.ax = plt.subplots()
         self.ax.set_xlim(xlim)
@@ -50,11 +53,13 @@ class PlotSim():
     def plot_points(self, pts):
         [self.ax.plot(*pt, marker='o', markersize=4, color='r') for pt in pts]
 
-
     def mm_to_pt(self, mm):
         length = self.fig.bbox_inches.width * self.ax.get_position().width * 72
         value_range = np.diff(self.ax.get_xlim())
         return mm * (length / value_range)
+
+    def naive_set_bounds(self, pts):
+        pass
 
     @staticmethod
     def spline_to_arc(arc):

@@ -1,9 +1,10 @@
 import wx
-import serpentine_gui as gui
-# import serpentine_utils as utils
+from .serpentine_gui import MainFrame, ErrorDialog
+from .serpentine_utils import SerpentineVector
 import functools as ft
+import os
 
-class SerpentineGUI(gui.MainFrame):
+class SerpentineGUI(MainFrame):
 
     def __init__(self, parent, validate_func, run_func):
         super(SerpentineGUI, self).__init__(parent)
@@ -111,16 +112,16 @@ class SerpentineGUI(gui.MainFrame):
     def ApplyEvent(self, event):
         event_str = 'apply'
         self.log(event_str)
-        status, errmsg = self.validate_func(self.params)
+        status, errmsg = self.run_func(self.params)
         if not status:
             self.error(errmsg)
-        self.run_func(self.params)
-        wx.Exit()
+            return
+        self.Destroy()
 
     def CancelEvent(self, event):
         event_str = 'cancel'
         self.log(event_str)
-        wx.Exit()
+        self.Destroy()
 
     def ValidateEvent(self, event):
         event_str = 'validate'
@@ -164,7 +165,7 @@ class SerpentineGUI(gui.MainFrame):
         
         return f
     
-    class SerpentineError(gui.ErrorDialog):
+    class SerpentineError(ErrorDialog):
 
         def __init__(self, parent, text):
             super(SerpentineGUI.SerpentineError, self).__init__(parent)
@@ -186,19 +187,22 @@ class SerpentineWrapper():
 
     def __init__(self):
         app = wx.App(False)
+
+        cd = os.getcwd()        # weird hack to make loading the images work.
+        os.chdir(os.path.dirname(__file__))
         frame = SerpentineGUI(None, self.validate, self.run)
+        os.chdir(cd)
+
         frame.Show(True)
         app.MainLoop()
 
     @staticmethod
-    def validate(a):
-        print(a)
-        return True, None
+    def validate(args):
+        return SerpentineVector().validate(args)
     
     @staticmethod
-    def run(a):
-        print(a)
-        return True, None
+    def run(args):
+        return SerpentineVector().run(args)
 
 if __name__ == '__main__':
 
