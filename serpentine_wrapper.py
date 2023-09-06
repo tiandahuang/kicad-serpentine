@@ -50,68 +50,15 @@ class SerpentineGUI(MainFrame):
                 'noedge':   self.edgedisable_value.SetValue,
         }
 
-        self.param_defaults = {
-                'radius':   1,
-                'amplitude':1,
-                'alpha':    0,
-                'length':   10,
-                'pitch':    0.2,
-                'f_wc':     1,
-                'f_width':  0.2,
-                'b_wc':     1,
-                'b_width':  0.2,
-                'noedge':   False,
-        }
-
-        for param, val in self.param_defaults.items():
-            self.param_setters[param](val)
-        self.params = {param:self.param_getters[param]() for param in self.param_getters}
+        self.params = {param:None for param in self.param_getters}
 
     # event handlers
 
-    def RadiusParamEvent(self, event):
-        event_str = 'radius'
-        self.param_event_handler(event_str)
-
-    def AmplitudeParamEvent(self, event):
-        event_str = 'amplitude'
-        self.param_event_handler(event_str)
-
-    def AlphaParamEvent(self, event):
-        event_str = 'alpha'
-        self.param_event_handler(event_str)
-
-    def LengthParamEvent(self, event):
-        event_str = 'length'
-        self.param_event_handler(event_str)
-
-    def WirePitchParamEvent(self, event):
-        event_str = 'pitch'
-        self.param_event_handler(event_str)
-
-    def EdgeDisableParamEvent(self, event):
-        event_str = 'noedge'
-        self.param_event_handler(event_str)
-
-    def FWCParamEvent(self, event):
-        event_str = 'f_wc'
-        self.param_event_handler(event_str)
-
-    def FWidthParamEvent(self, event):
-        event_str = 'f_width'
-        self.param_event_handler(event_str)
-
-    def BWCParamEvent(self, event):
-        event_str = 'b_wc'
-        self.param_event_handler(event_str)
-
-    def BWidthParamEvent(self, event):
-        event_str = 'b_width'
-        self.param_event_handler(event_str)
-
     def ApplyEvent(self, event):
-        event_str = 'apply'
-        self.log(event_str)
+        status, errmsg = self.get_all_params()
+        if not status:
+            self.error(errmsg)
+            return
         status, errmsg = self.run_func(self.params)
         if not status:
             self.error(errmsg)
@@ -119,18 +66,31 @@ class SerpentineGUI(MainFrame):
         self.Destroy()
 
     def CancelEvent(self, event):
-        event_str = 'cancel'
-        self.log(event_str)
         self.Destroy()
 
     def ValidateEvent(self, event):
-        event_str = 'validate'
-        self.log(str(self.params))
+        status, errmsg = self.get_all_params()
+        if not status:
+            self.error(errmsg)
+            return
         status, errmsg = self.validate_func(self.params)
         if not status:
             self.error(errmsg)
+        self.error('\n'.join([f'{p}:{v}' for p, v in self.params.items()]))
 
     # helper methods
+
+    def get_all_params(self):
+        params = {param:self.param_getters[param]() for param in self.param_getters}
+        invalid = []
+        for param, val in params.items():
+            if val is not None: 
+                self.params[param] = val
+            else:
+                self.param_setters[param]('')
+                invalid.append(param)
+        errmsg = '\n'.join([f'{p} parameter has invalid value' for p in invalid])
+        return (len(invalid) == 0), errmsg
 
     def log(self, t):
         self.StatusBar.SetStatusText(t)
@@ -138,14 +98,7 @@ class SerpentineGUI(MainFrame):
     def error(self, t):
         frame = self.SerpentineError(self, t)
         frame.Show(True)
-
-    def param_event_handler(self, event_str):
-        val = self.param_getters[event_str]()
-        if val is not None:
-            self.params[event_str] = val
-        else:
-            self.param_setters[event_str](self.params[event_str])
-        self.log(f'{event_str} set to {self.params[event_str]}')
+    
 
     @staticmethod
     def validate_num(val, lo=None, hi=None, clip=False, type_conv=float):

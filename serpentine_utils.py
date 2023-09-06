@@ -21,7 +21,6 @@ class SerpentineVector():
         self.Arc = collections.namedtuple('Arc', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])
 
     def calculate_vectors(self, params):
-        raise Exception(str(params))
         """
         parameters:
         -----------
