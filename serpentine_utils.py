@@ -1,4 +1,5 @@
 import pcbnew
+import wx
 import math
 import collections
 
@@ -7,7 +8,7 @@ class SerpentineVector():
     def __init__(self):
         
         self.vectors = {
-            'edgecuts':{'width':0.1, 'offsets':[], 'segments':[]},
+            'edgecuts':{'width':0, 'offsets':[], 'segments':[]},
             'f_copper':{'width':0, 'offsets':[], 'segments':[]},
             'b_copper':{'width':0, 'offsets':[], 'segments':[]}}
 
@@ -20,6 +21,7 @@ class SerpentineVector():
         self.Arc = collections.namedtuple('Arc', ['x1', 'y1', 'x2', 'y2', 'x3', 'y3'])
 
     def calculate_vectors(self, params):
+        raise Exception(str(params))
         """
         parameters:
         -----------
@@ -101,6 +103,8 @@ class SerpentineVector():
     
     def route_vectors(self):
         self.board = pcbnew.GetBoard()
+        self.group = pcbnew.PCB_GROUP(self.board)
+        self.board.Add(self.group)
         name_to_layer = {'edgecuts':pcbnew.Edge_Cuts,
                          'f_copper':pcbnew.F_Cu,
                          'b_copper':pcbnew.B_Cu}
@@ -110,31 +114,41 @@ class SerpentineVector():
             pcblayer = name_to_layer[layer]
             for s in self.vectors[layer]['segments']:
                 if type(s) is self.Arc:
-                    self.board.Add(self.arc_to_pcbarc(s, width, pcblayer))
+                    obj = self.arc_to_pcbarc(s, width, pcblayer)
                 else:       # type is LineSeg
-                    self.board.Add(self.line_to_pcbtrack(s, width, pcblayer))
+                    obj = self.line_to_pcbtrack(s, width, pcblayer)
+                self.board.Add(obj)
+                self.group.AddItem(obj)
+
+        pcbnew.Refresh()
 
     def arc_to_pcbarc(self, arc, width, layer):
-        pcbarc = pcbnew.PCB_ARC(self.board)
+        if layer != pcbnew.Edge_Cuts:
+            pcbarc = pcbnew.PCB_ARC(self.board)
+            pcbarc.SetStart(self.xy_to_pcbpoint(arc.x1, arc.y1))
+            pcbarc.SetMid(self.xy_to_pcbpoint(arc.x2, arc.y2))
+            pcbarc.SetEnd(self.xy_to_pcbpoint(arc.x3, arc.y3))
+        else:
+            pcbarc = pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_ARC)
+            pcbarc.SetArcGeometry(self.xy_to_pcbpoint(arc.x1, arc.y1),
+                               self.xy_to_pcbpoint(arc.x2, arc.y2),
+                               self.xy_to_pcbpoint(arc.x3, arc.y3))
         pcbarc.SetLayer(layer)
         pcbarc.SetWidth(pcbnew.FromMM(width))
-        pcbarc.SetStart(self.xy_to_pcbpoint(arc.x1, arc.y1))
-        pcbarc.SetMid(self.xy_to_pcbpoint(arc.x2, arc.y2))
-        pcbarc.SetEnd(self.xy_to_pcbpoint(arc.x3, arc.y3))
-        self.board.Add(pcbarc)
+        
         return pcbarc
 
     def line_to_pcbtrack(self, lineseg, width, layer):
-        track = pcbnew.PCB_TRACK(self.board)
+        track = (pcbnew.PCB_TRACK(self.board) if layer != pcbnew.Edge_Cuts else
+                 pcbnew.PCB_SHAPE(self.board, pcbnew.SHAPE_T_SEGMENT))
         track.SetLayer(layer)
         track.SetWidth(pcbnew.FromMM(width))
         track.SetStart(self.xy_to_pcbpoint(lineseg.x1, lineseg.y1))
         track.SetEnd(self.xy_to_pcbpoint(lineseg.x2, lineseg.y2))
-        self.board.Add(track)
         return track
     
     def xy_to_pcbpoint(self, x, y):
-        return pcbnew.VECTOR2I_MM(x, y)
+        return pcbnew.VECTOR2I_MM(x+100, y+100)
 
     @staticmethod
     def mirror_pts_y(pts, y):
@@ -143,6 +157,10 @@ class SerpentineVector():
     @staticmethod
     def translate_pts(pts, x, y):
         return [(x + _x, y + _y) for _x, _y in pts]
+
+    @staticmethod
+    def pts_to_center_arc(center, start_point, middle_point, end_point):
+        pass
 
     def validate(self, params):
         try:
