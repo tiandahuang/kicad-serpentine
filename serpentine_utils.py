@@ -8,7 +8,7 @@ class SerpentineVector():
     def __init__(self):
         
         self.vectors = {
-            'edgecuts':{'width':0, 'offsets':[], 'segments':[]},
+            'edgecuts':{'width':0.01, 'offsets':[], 'segments':[]},
             'f_copper':{'width':0, 'offsets':[], 'segments':[]},
             'b_copper':{'width':0, 'offsets':[], 'segments':[]}}
 
